@@ -1,0 +1,47 @@
+{
+    "name": "liquidrazor/file-locator",
+    "description": "Minimal filesystem discovery component for LiquidRazor.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "filesystem",
+        "file-discovery",
+        "file-locator",
+        "dependency-injection",
+        "di-registry"
+    ],
+    "homepage": "https://github.com/LiquidRazor/FileLocator",
+    "authors": [
+        {
+            "name": "Dan Radu Dragomir",
+            "homepage": "https://github.com/Noramarth",
+            "role": "Maintainer (Noramarth)"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/LiquidRazor/FileLocator/issues",
+        "source": "https://github.com/LiquidRazor/FileLocator",
+        "docs": "https://github.com/LiquidRazor/FileLocator/blob/main/docs/README.md"
+    },
+    "require": {
+        "php": "^8.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "LiquidRazor\\FileLocator\\": [
+                "include/",
+                "lib/",
+                "src/"
+            ]
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LiquidRazor\\FileLocator\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "php tests/run.php"
+    }
+}

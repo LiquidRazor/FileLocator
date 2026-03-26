@@ -1,0 +1,36 @@
+discovery:
+  defaults:
+    follow_symlinks: false
+    include_hidden: false
+    on_unreadable: skip
+    extensions: [php]
+
+  exclude:
+    - vendor
+    - node_modules
+    - .git
+    - .idea
+    - .vscode
+    - var/cache
+
+  roots:
+    include:
+      enabled: true
+      path: include
+      recursive: true
+      extensions: [php]
+      exclude: []
+
+    lib:
+      enabled: true
+      path: lib
+      recursive: true
+      extensions: [php]
+      exclude: []
+
+    src:
+      enabled: true
+      path: src
+      recursive: true
+      extensions: [php]
+      exclude: []
