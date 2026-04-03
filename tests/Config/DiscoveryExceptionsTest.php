@@ -8,7 +8,6 @@ use LiquidRazor\FileLocator\Exception\DiscoveryConfigException;
 use LiquidRazor\FileLocator\Exception\FileLocatorException;
 use LiquidRazor\FileLocator\Exception\InvalidDiscoveryConfigException;
 use LiquidRazor\FileLocator\Exception\PathAccessException;
-use LiquidRazor\FileLocator\Exception\YamlParseException;
 use LiquidRazor\FileLocator\Tests\Support\Assert;
 
 return [
@@ -23,16 +22,6 @@ return [
 
         Assert::true($exception instanceof DiscoveryConfigException);
         Assert::same('Unsupported discovery schema.', $exception->getMessage());
-    }),
-    test('yaml parse exception preserves the path and parse reason', static function (): void {
-        $previous = new \RuntimeException('Parser failed.');
-        $exception = new YamlParseException('/project/config/roots.yaml', 'Unexpected indentation.', $previous);
-
-        Assert::true($exception instanceof DiscoveryConfigException);
-        Assert::same('/project/config/roots.yaml', $exception->path());
-        Assert::contains('/project/config/roots.yaml', $exception->getMessage());
-        Assert::contains('Unexpected indentation.', $exception->getMessage());
-        Assert::same($previous, $exception->getPrevious());
     }),
     test('path access exception preserves the path and attempted operation', static function (): void {
         $previous = new \RuntimeException('Permission denied.');

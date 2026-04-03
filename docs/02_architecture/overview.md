@@ -48,21 +48,19 @@ Layer responsibilities:
   - enums
   - exceptions
 - `lib/`
-  - config loading
-  - config merge and validation
+  - discovery config validation
   - path normalization
   - path filtering
-  - internal YAML fallback parser
 - `src/`
   - runtime composition
+  - ConfigLoader integration
   - public locator entry point
 
 ## Repository Boundaries
 
 Implemented here:
 
-- YAML config loading
-- config merge and validation
+- discovery config validation
 - path normalization
 - directory traversal
 - file filtering
@@ -70,6 +68,8 @@ Implemented here:
 
 Explicitly not implemented here:
 
+- YAML or JSON parsing
+- environment interpolation
 - class discovery
 - reflection
 - tokenization or AST parsing

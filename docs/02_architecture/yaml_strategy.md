@@ -1,88 +1,39 @@
-# YAML Loading Strategy
+# Config Loading Integration
 
-The library reads discovery config from YAML and supports two parsing paths:
+FileLocator no longer implements YAML parsing internally.
 
-- native parsing through the PHP `yaml` extension
-- a strict internal fallback parser
+Discovery config is loaded through `liquidrazor/config-loader`, with YAML selected explicitly for every `DiscoveryConfigFactory` instance.
 
-The fallback exists so the library can run without external packages or mandatory extensions.
+## Loader Usage
 
-## Native Extension Path
+`DiscoveryConfigFactory` creates `ConfigLoader` instances with:
 
-`YamlDiscoveryConfigLoader` checks `extension_loaded('yaml')` first.
+- config root `resources/config` for library defaults
+- config root `<project-root>/config` for the optional project override
+- logical config name `roots`
+- format `ConfigFormat::YAML`
 
-When the extension is available:
+## What ConfigLoader Owns
 
-- the loader calls `yaml_parse_file($path)`
-- a `false` result is treated as a parse failure
-- the parsed top-level value must be a mapping
+ConfigLoader is responsible for:
 
-If parsing fails, the loader throws `YamlParseException`.
+- locating `roots.yaml` or `roots.yml` from the logical name `roots`
+- reading the file contents
+- selecting the YAML parser
+- applying environment interpolation
+- surfacing syntax and format errors
 
-## Fallback Parser Path
+## What FileLocator Still Owns
 
-When the `yaml` extension is not available, the loader uses `MinimalYamlParser`.
+After loading, FileLocator still:
 
-The fallback parser is:
+- validates the `discovery` schema
+- normalizes project-relative paths
+- converts the validated array into `DiscoveryConfig`
 
-- internal to this repository
-- intentionally small
-- limited to the discovery config format used by this library
+## Deterministic Format Rules
 
-It is not part of the public API.
-
-## Supported YAML Subset
-
-The fallback parser supports the subset required by `resources/config/roots.yaml` and project overrides.
-
-Supported constructs:
-
-- top-level mapping
-- nested mappings
-- two-space indentation
-- plain scalar keys using letters, digits, `_`, `.`, and `-`
-- booleans: `true`, `false`
-- strings:
-  - plain strings
-  - single-quoted strings
-  - double-quoted strings
-- scalar lists:
-  - block form with `- item`
-  - inline form such as `[php]`
-- empty inline list: `[]`
-
-This is sufficient for the supported discovery schema.
-
-## Unsupported YAML Features
-
-The fallback parser rejects features that are outside the library config format:
-
-- tabs for indentation
-- indentation levels not divisible by two
-- inline mappings
-- nested lists
-- list items containing mappings
-- anchors
-- aliases
-- YAML merge keys
-- multiline scalars
-
-It also rejects trailing or malformed content that does not fit the supported mapping and list grammar.
-
-## Error Behavior
-
-`YamlParseException` is thrown when:
-
-- the YAML file does not exist
-- the native extension cannot parse the file
-- the fallback parser encounters unsupported or malformed YAML
-- the parsed top-level value is not a mapping
-
-The exception message includes the YAML file path.
-Fallback parser errors also include the source line number.
-
-## Scope Limit
-
-The fallback parser is not a general-purpose YAML parser.
-It exists only to support this repository's own discovery configuration format.
-New features should not expand it into a broad YAML implementation.
+- YAML is the only format used by FileLocator
+- `.yaml` and `.yml` are both accepted
+- if both variants exist for the same logical name, loading fails
+- if only `roots.json` exists, loading fails instead of silently switching format

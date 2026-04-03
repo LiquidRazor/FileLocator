@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 define('LIQUIDRAZOR_FILELOCATOR_ROOT', dirname(__DIR__));
 
+if (is_file(LIQUIDRAZOR_FILELOCATOR_ROOT . '/vendor/autoload.php')) {
+    require LIQUIDRAZOR_FILELOCATOR_ROOT . '/vendor/autoload.php';
+}
+
 spl_autoload_register(
     static function (string $class): void {
         $prefixes = [

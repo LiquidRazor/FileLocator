@@ -1,7 +1,7 @@
 # Configuration System
 
 The configuration system exists to keep discovery behavior explicit, project-local, and deterministic.
-It loads one built-in config file, optionally applies one project override, and produces a normalized `DiscoveryConfig`.
+It delegates raw config loading to `liquidrazor/config-loader`, then validates the discovery schema and produces a normalized `DiscoveryConfig`.
 
 ## Public API
 
@@ -27,7 +27,19 @@ The `projectRoot` argument must be an absolute path.
 
 ## Config Sources
 
-The factory loads config in this order:
+`DiscoveryConfigFactory` uses `ConfigLoader` with:
+
+- config root: `resources/config`
+- logical name: `roots`
+- format: YAML
+
+It then attempts an optional project load with:
+
+- config root: `<project-root>/config`
+- logical name: `roots`
+- format: YAML
+
+The effective sources are:
 
 1. `resources/config/roots.yaml`
 2. `config/roots.yaml`
@@ -37,7 +49,7 @@ Rules:
 
 - the library config is always loaded first
 - the project override is optional
-- if both project files exist, `config/roots.yaml` wins
+- if both project files exist, ConfigLoader fails because both match the same logical config name
 - invalid project config fails immediately
 
 ## Canonical Config Shape
@@ -106,15 +118,14 @@ discovery:
 
 ## Merge Behavior
 
-The library merges defaults and project config before validation.
+Defaults and project config are merged before validation using ConfigLoader's merge rules.
 
 Merge rules are exact:
 
 - scalar values are overridden by the project value
-- lists are merged in first-seen order and deduplicated
+- indexed arrays are fully replaced by the project value
 - roots are merged by name
 - existing root fields are overridden per field
-- root `extensions` and `exclude` are merged as lists
 - new roots are appended after existing roots
 - disabled roots remain in raw merged data until validation removes them
 
@@ -148,6 +159,7 @@ Result:
 - `lib` is removed from the runtime root list
 - `src/Legacy` is excluded only for `src`
 - `modules` is added as a new root
+The default global exclude list is replaced when the project config provides its own `discovery.exclude` list.
 
 ## Root Semantics
 
@@ -214,10 +226,16 @@ Extension handling is strict:
 
 ## Exceptions
 
-Configuration failures use repository-specific exceptions:
+Config loading failures are surfaced from `liquidrazor/config-loader`, including:
 
-- `YamlParseException`
-  - YAML file missing
+- `MissingConfigFileException`
+- `InvalidConfigSyntaxException`
+- `UnsupportedFormatException`
+- `ConfigException`
+
+Discovery schema and path validation failures still use:
+
+- `InvalidDiscoveryConfigException`
   - YAML parse failure
   - YAML top-level value is not a mapping
 - `InvalidDiscoveryConfigException`

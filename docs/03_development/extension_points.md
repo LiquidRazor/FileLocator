@@ -60,7 +60,7 @@ Do not extend this repository by adding:
 If the config schema must change, update the full config pipeline together:
 
 - default resource in `resources/config/roots.yaml`
-- YAML loader expectations
+- ConfigLoader integration expectations
 - merge rules
 - validation rules
 - readonly value objects when needed
@@ -74,7 +74,7 @@ Schema changes must preserve:
 - early filtering
 - repository scope limited to filesystem discovery
 
-## YAML Fallback Boundary
+## Config Loading Boundary
 
-The internal fallback parser may only support the YAML subset needed by the repository config format.
-Do not turn it into a general-purpose YAML parser to accommodate unrelated config features.
+Do not reintroduce internal YAML or JSON parsing into FileLocator.
+Format detection, parsing, and interpolation belong to `liquidrazor/config-loader`.

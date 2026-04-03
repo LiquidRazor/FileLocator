@@ -16,10 +16,10 @@ filesystem → files → classes → descriptors → DI registry
 
 * Fast, iterator-based filesystem traversal with low memory use
 * Convention-first defaults for `include/`, `lib/`, and `src/`
-* YAML-based configuration with project overrides
-* Clean separation of concerns with no DI, reflection, or parsing
+* YAML-based configuration loaded through `liquidrazor/config-loader`
+* Clean separation of concerns with no DI, reflection, or PHP parsing
 * Safe traversal with configurable symlink, hidden file, and unreadable path handling
-* No framework or third-party runtime dependencies
+* Config loading delegated to a dedicated LiquidRazor library
 
 ---
 
@@ -71,6 +71,9 @@ or
 ```
 config/roots.yml
 ```
+
+Config loading is delegated to `liquidrazor/config-loader` with YAML selected explicitly.
+If both `config/roots.yaml` and `config/roots.yml` exist, loading fails instead of silently picking one.
 
 ---
 
@@ -160,6 +163,21 @@ discovery:
 
 ---
 
+## Config Loading Boundary
+
+`FileLocator` no longer locates config files by full path, reads raw config contents, parses YAML, merges raw config layers, or interpolates environment variables itself.
+
+Those responsibilities now belong to `liquidrazor/config-loader`.
+
+`DiscoveryConfigFactory` only:
+
+* asks ConfigLoader for normalized config arrays using the logical name `roots`
+* validates the discovery schema
+* normalizes project-relative paths
+* builds `DiscoveryConfig`, `DiscoveryDefaults`, and `RootConfig`
+
+---
+
 ## Merge Strategy: How Config Is Built
 
 Configuration is built as:
@@ -168,13 +186,16 @@ Configuration is built as:
 library defaults + project overrides → final discovery config
 ```
 
-Rules:
+The default resource is loaded from `resources/config/roots.yaml`.
+The optional project override is loaded from the project `config` root using the logical name `roots`.
 
-* Scalars → overridden by project config
-* Lists (e.g. `exclude`) → merged and deduplicated
-* Roots → merged by key
-* Root options → overridden per root
-* Disabled roots → removed from traversal
+Raw config merge behavior now follows `liquidrazor/config-loader`:
+
+* Associative arrays → merged recursively
+* Scalars → overridden by later config
+* Indexed arrays → replaced by later config
+
+After loading, FileLocator still validates the discovery schema and removes disabled roots from the runtime config.
 
 ---
 
@@ -184,8 +205,7 @@ The system is intentionally split into layers:
 
 ### 1. Config Layer
 
-* `YamlDiscoveryConfigLoader`
-* `DiscoveryConfigMerger`
+* `DiscoveryConfigFactory`
 * `DiscoveryConfigValidator`
 * `DiscoveryConfig`
 
@@ -272,7 +292,7 @@ DIRegistry
 - [Architecture overview documentation](docs/02_architecture/overview.md)
 - [Configuration system documentation](docs/02_architecture/config_system.md)
 - [File locator API documentation](docs/02_architecture/file_locator.md)
-- [YAML loading strategy documentation](docs/02_architecture/yaml_strategy.md)
+- [Config loading integration documentation](docs/02_architecture/yaml_strategy.md)
 - [Development setup documentation](docs/03_development/setup.md)
 - [Implementation guidelines documentation](docs/03_development/implementation_guidelines.md)
 - [Testing strategy documentation](docs/03_development/testing.md)

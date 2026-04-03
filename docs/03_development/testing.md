@@ -17,8 +17,7 @@ It discovers `*Test.php` files under `tests/` and executes them through `tests/b
 The suite is organized by behavior:
 
 - `tests/Config/`
-  - YAML loading
-  - merge behavior
+  - ConfigLoader-backed factory integration
   - validation
   - value objects
   - exception behavior
@@ -52,9 +51,11 @@ This keeps tests close to the actual runtime behavior of the library.
 Any change affecting discovery behavior should preserve coverage for:
 
 - default config loading
-- project override precedence
-- config merge rules
+- deterministic project config resolution
+- ConfigLoader-backed merge behavior
 - schema validation failures
+- invalid YAML failures
+- unsupported format failures
 - path normalization failures
 - global exclusions
 - root-specific exclusions

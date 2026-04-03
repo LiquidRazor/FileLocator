@@ -31,24 +31,21 @@ The flow has two phases:
 It does the following in order:
 
 1. Normalizes the supplied project root.
-2. Loads the library default config from `resources/config/roots.yaml`.
-3. Looks for a project override:
-   - `config/roots.yaml`
-   - `config/roots.yml`
-4. Merges defaults and override.
+2. Uses `ConfigLoader` to load the library default config from the logical name `roots` under `resources/config`.
+3. Uses `ConfigLoader` to attempt an optional project override from the logical name `roots` under `<project-root>/config`.
+4. Merges the two raw config arrays with ConfigLoader's merge rules.
 5. Validates and normalizes the merged config.
 6. Builds immutable runtime value objects.
 
-If both override files exist, `config/roots.yaml` is used and `config/roots.yml` is ignored.
+If both `config/roots.yaml` and `config/roots.yml` exist, ConfigLoader fails because both match the same logical config name.
 
 ## Config Merge
 
-Merge behavior is deterministic and field-specific:
+Merge behavior is deterministic and follows ConfigLoader:
 
 - scalar values are overridden by the project config
-- list values are merged in declaration order and deduplicated
+- indexed arrays are replaced by the project config
 - roots are merged by root name
-- root `exclude` and `extensions` are merged as lists
 - root scalar fields such as `path`, `recursive`, and `enabled` are overridden
 
 `enabled: false` is preserved during merge, then removed when the runtime config is built.
@@ -130,7 +127,7 @@ The locator does not accumulate a complete file list in memory.
 
 Configuration phase failures:
 
-- `YamlParseException` when a YAML file cannot be parsed
+- `ConfigLoader` exceptions when a config root, file, format, or YAML document is invalid
 - `InvalidDiscoveryConfigException` when merged config fails schema or path validation
 
 Traversal phase failures:

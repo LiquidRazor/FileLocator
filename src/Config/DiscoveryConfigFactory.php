@@ -4,69 +4,44 @@ declare(strict_types=1);
 
 namespace LiquidRazor\FileLocator\Config;
 
-use Closure;
+use LiquidRazor\ConfigLoader\ConfigLoader;
+use LiquidRazor\ConfigLoader\Enum\ConfigFormat;
+use LiquidRazor\ConfigLoader\Exception\InvalidConfigRootException;
+use LiquidRazor\ConfigLoader\Exception\MissingConfigFileException;
+use LiquidRazor\ConfigLoader\Lib\Merge\ConfigMerger;
+use LiquidRazor\ConfigLoader\Value\LoaderOptions;
 use LiquidRazor\FileLocator\Enum\UnreadablePathMode;
 use LiquidRazor\FileLocator\Filesystem\PathNormalizer;
 
 final readonly class DiscoveryConfigFactory
 {
-    /**
-     * @var Closure(string): array<string, mixed>
-     */
-    private Closure $loadConfig;
-
-    /**
-     * @var Closure(array<string, mixed>, array<string, mixed>): array<string, mixed>
-     */
-    private Closure $mergeConfig;
-
-    /**
-     * @var Closure(array<string, mixed>, string): array{
-     *     discovery: array{
-     *         defaults: array{
-     *             follow_symlinks: bool,
-     *             include_hidden: bool,
-     *             on_unreadable: 'skip'|'fail',
-     *             extensions: list<string>
-     *         },
-     *         exclude: list<string>,
-     *         roots: array<string, array{
-     *             enabled: true,
-     *             path: string,
-     *             recursive: bool,
-     *             extensions: list<string>,
-     *             exclude: list<string>
-     *         }>
-     *     }
-     * }
-     */
-    private Closure $validateConfig;
+    private string $defaultConfigRoot;
 
     public function __construct(
         private PathNormalizer $pathNormalizer = new PathNormalizer(),
-        ?Closure               $loadConfig = null,
-        ?Closure               $mergeConfig = null,
-        ?Closure               $validateConfig = null,
+        private DiscoveryConfigValidator $validator = new DiscoveryConfigValidator(),
+        private ConfigMerger $configMerger = new ConfigMerger(),
+        ?string $defaultConfigRoot = null,
     ) {
-        $this->loadConfig = $loadConfig ?? static function (string $path): array {
-            return (new YamlDiscoveryConfigLoader())->load($path);
-        };
-        $this->mergeConfig = $mergeConfig ?? static function (array $defaults, array $overrides): array {
-            return (new DiscoveryConfigMerger())->merge($defaults, $overrides);
-        };
-        $this->validateConfig = $validateConfig ?? static function (array $config, string $projectRoot): array {
-            return (new DiscoveryConfigValidator())->validate($config, $projectRoot);
-        };
+        $this->defaultConfigRoot = $defaultConfigRoot ?? dirname(__DIR__, 2) . '/resources/config';
     }
 
     public function create(string $projectRoot): DiscoveryConfig
     {
         $normalizedProjectRoot = $this->pathNormalizer->normalize($projectRoot, $projectRoot);
 
-        $defaults = ($this->loadConfig)($this->defaultConfigPath());
-        $overrides = $this->loadProjectOverrides($normalizedProjectRoot);
-        $merged = ($this->mergeConfig)($defaults, $overrides);
-        $validated = ($this->validateConfig)($merged, $normalizedProjectRoot);
+        $defaults = $this->loadConfig($this->defaultConfigRoot, required: true);
+        $overrides = $this->loadConfig($normalizedProjectRoot . '/config', required: false);
+        $layers = [$defaults];
+
+        if ($overrides !== []) {
+            $layers[] = $overrides;
+        }
+
+        $validated = $this->validator->validate(
+            $this->configMerger->mergeAll($layers),
+            $normalizedProjectRoot,
+        );
 
         return $this->buildConfig($validated, $normalizedProjectRoot);
     }
@@ -74,25 +49,17 @@ final readonly class DiscoveryConfigFactory
     /**
      * @return array<string, mixed>
      */
-    private function loadProjectOverrides(string $projectRoot): array
+    private function loadConfig(string $configRoot, bool $required): array
     {
-        foreach ([
-            $projectRoot . '/config/roots.yaml',
-            $projectRoot . '/config/roots.yml',
-        ] as $path) {
-            if (!is_file($path)) {
-                continue;
+        try {
+            return $this->createLoader($configRoot)->load('roots');
+        } catch (InvalidConfigRootException | MissingConfigFileException $e) {
+            if ($required) {
+                throw $e;
             }
 
-            return ($this->loadConfig)($path);
+            return [];
         }
-
-        return [];
-    }
-
-    private function defaultConfigPath(): string
-    {
-        return dirname(__DIR__, 2) . '/resources/config/roots.yaml';
     }
 
     /**
@@ -143,6 +110,16 @@ final readonly class DiscoveryConfigFactory
             exclude: $validated['discovery']['exclude'],
             defaults: $defaults,
             roots: $roots,
+        );
+    }
+
+    private function createLoader(string $configRoot): ConfigLoader
+    {
+        return new ConfigLoader(
+            new LoaderOptions(
+                configRoot: $configRoot,
+                format: ConfigFormat::YAML,
+            ),
         );
     }
 }
