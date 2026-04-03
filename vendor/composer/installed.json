@@ -1,0 +1,58 @@
+{
+    "packages": [
+        {
+            "name": "liquidrazor/config-loader",
+            "version": "v0.1.1",
+            "version_normalized": "0.1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/LiquidRazor/ConfigLoader.git",
+                "reference": "08c04efd848ea53ddaa1a446ceb6adaf58f066a7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/LiquidRazor/ConfigLoader/zipball/08c04efd848ea53ddaa1a446ceb6adaf58f066a7",
+                "reference": "08c04efd848ea53ddaa1a446ceb6adaf58f066a7",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^12.5"
+            },
+            "time": "2026-04-03T06:08:04+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "LiquidRazor\\ConfigLoader\\": "src/",
+                    "LiquidRazor\\ConfigLoader\\Lib\\": "lib/",
+                    "LiquidRazor\\ConfigLoader\\Enum\\": "include/Enum/",
+                    "LiquidRazor\\ConfigLoader\\Value\\": "include/Value/",
+                    "LiquidRazor\\ConfigLoader\\Contract\\": "include/Contract/",
+                    "LiquidRazor\\ConfigLoader\\Exception\\": "include/Exception/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dan Radu Dragomir",
+                    "homepage": "https://github.com/Noramarth",
+                    "role": "Maintainer (Noramarth)"
+                }
+            ],
+            "description": "A lightweight, data-only configuration loading library for PHP 8.3+.",
+            "support": {
+                "issues": "https://github.com/LiquidRazor/ConfigLoader/issues",
+                "source": "https://github.com/LiquidRazor/ConfigLoader"
+            },
+            "install-path": "../liquidrazor/config-loader"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}
